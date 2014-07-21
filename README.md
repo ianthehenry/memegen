@@ -1,10 +1,26 @@
-To install, Mac edition:
+This project relies on `cairo` and `pango`. If you don't have them already, you can install them with Homebrew like this:
 
     $ brew install cairo --without-x11
     $ brew install pango --without-x11
-    $ cabal install gtk2hs-buildtools
-    $ cabal sandbox init # we deliberately do this after installing gtk2hs-buildtools, because it needs to put stuff on our PATH
-    $ cabal install cairo
-    $ cabal install pango --with-gcc=gcc-4.8 # clang doesn't work. look don't ask me
-    $ cabal run # ✨ yay ✨
 
+Afterwards, I'm pretty sure you need `gtk2hs-buildtools` for something.
+
+    $ cabal install gtk2hs-buildtools
+
+Make sure you don't install that into a sandbox! It adds some binaries that you need. So make sure `~/.cabal/bin` is on your `PATH`.
+
+Afterwards, we do haskell things:
+
+    $ cabal sandbox init
+
+We have to install the Haskell `pango` bindings separately because `clang` can't build it. Look, don't ask me.
+
+    $ cabal install pango -j --with-gcc=gcc-4.8
+
+Then we install the rest:
+
+    $ cabal install -j --only-dependencies
+
+And we're done! ✨
+
+    $ cabal run
