@@ -3,22 +3,9 @@ import qualified Graphics.Rendering.Cairo as Cairo
 import qualified Graphics.Rendering.Pango as Pango
 import Data.Functor ((<$>))
 import System.Directory (getDirectoryContents)
-import Data.Set (Set, (\\))
+import Data.Set ((\\))
 import qualified Data.Set as Set
 import System.FilePath (dropExtension, (<.>), (</>))
-
-data Color = Color Double Double Double Double
-
-setColor :: Color -> Cairo.Render ()
-setColor (Color r g b a) = Cairo.setSourceRGBA r g b a
-
-bg :: Color -> Cairo.Render ()
-bg color = Cairo.withTargetSurface $ \surface -> do
-  setColor color
-  width <- Cairo.imageSurfaceGetWidth surface
-  height <- Cairo.imageSurfaceGetHeight surface
-  Cairo.rectangle 0 0 (fromIntegral width) (fromIntegral height)
-  Cairo.fill
 
 memeFont :: Double -> IO Pango.FontDescription
 memeFont size = do
@@ -64,11 +51,11 @@ memeText surface topText bottomText = do
     Cairo.moveTo 0 (height - bottomHeight)
     Pango.layoutPath bottomLayout
 
-    setColor (Color 0 0 0 1)
+    Cairo.setSourceRGBA 0 0 0 1
     Cairo.setLineWidth 4
     Cairo.setLineJoin Cairo.LineJoinBevel
     Cairo.strokePreserve
-    setColor (Color 1 1 1 1)
+    Cairo.setSourceRGBA 1 1 1 1
     Cairo.fill
 
     return ()
