@@ -2,6 +2,10 @@ module Main where
 import qualified Graphics.Rendering.Cairo as Cairo
 import qualified Graphics.Rendering.Pango as Pango
 import Data.Functor ((<$>))
+import System.Directory (getDirectoryContents)
+import Data.Set (Set, (\\))
+import qualified Data.Set as Set
+import System.FilePath (dropExtension, (<.>), (</>))
 
 data Color = Color Double Double Double Double
 
@@ -34,7 +38,7 @@ clamp (low, high) val = max (min high val) low
 
 fontSize :: Double -> String -> Double
 fontSize width text = clamp (30, 80) estimate
-  where estimate = width / (fromIntegral $ length text)
+  where estimate = width / fromIntegral (length text)
 
 memeText :: Cairo.Surface -> String -> String -> IO ()
 memeText surface topText bottomText = do
@@ -51,7 +55,7 @@ memeText surface topText bottomText = do
     bottomHeight <- Cairo.liftIO $ do
       configureLayout topLayout topFont width
       configureLayout bottomLayout bottomFont width
-      (_, (Pango.PangoRectangle _ _ _ bottomHeight)) <- Pango.layoutGetExtents bottomLayout
+      (_, Pango.PangoRectangle _ _ _ bottomHeight) <- Pango.layoutGetExtents bottomLayout
       return bottomHeight
 
     Cairo.moveTo 0 0
@@ -69,13 +73,23 @@ memeText surface topText bottomText = do
 
     return ()
 
-fillAndSave :: Cairo.Surface -> IO ()
-fillAndSave surface = do
-  memeText surface "BUILT A MEME GENERATOR" "IN HASKELL"
-  Cairo.surfaceWriteToPNG surface "test.png"
+renderTemplate :: String -> String -> String -> IO ()
+renderTemplate templateName topText bottomText =
+  Cairo.withImageSurfaceFromPNG path $ \surface ->
+    memeText surface topText bottomText >>
+    Cairo.surfaceWriteToPNG surface "test.png"
+  where path = "templates" </> templateName <.> "png"
 
 main :: IO ()
-main =
-  -- Cairo.withImageSurface Cairo.FormatARGB32 480 480 fillAndSave
-  Cairo.withImageSurfaceFromPNG "success.png" fillAndSave
+main = do
+  let name = "success-kid"
+  files <- getDirectoryContents "templates/"
+  let fileNames = Set.fromList files \\ Set.fromList [".", ".."]
+  let templates = Set.map dropExtension fileNames
+  if Set.member name templates then
+    renderTemplate name "BUILT A MEME GENERATOR" "IN HASKELL" >>
+    putStrLn "okay"
+  else
+    putStrLn "I don't have that template"
+  
 

@@ -19,7 +19,10 @@ executable meme
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       pango,
+  build-depends:       filepath >= 1.3.0.2,
+                       containers >= 0.5.5.1,
+                       directory >= 1.2.1.0,
+                       pango,
                        cairo,
                        base >=4.6 && <4.8
   -- hs-source-dirs:
