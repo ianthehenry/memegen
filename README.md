@@ -1,3 +1,5 @@
+The following build instructions are for Mac users. It's a lot more straightforward on Linux.
+
 This project relies on `cairo` and `pango`. If you don't have them already, you can install them with Homebrew like this:
 
     $ brew install cairo --without-x11
@@ -24,3 +26,7 @@ Then we install the rest:
 And we're done! ✨
 
     $ cabal run
+
+If all goes according to plan:
+
+![Truly a success we can all appreciate](screenshot.png)
