@@ -1,5 +1,6 @@
 module Main where
 import qualified Graphics.Rendering.Cairo as Cairo
+import Graphics.Rendering.Pango (PangoLayout, PangoRectangle(..))
 import qualified Graphics.Rendering.Pango as Pango
 import Data.Functor ((<$>))
 import System.Directory (getDirectoryContents)
@@ -14,7 +15,7 @@ memeFont size = do
   Pango.fontDescriptionSetSize font size
   return font
 
-configureLayout :: Pango.PangoLayout -> Pango.FontDescription -> Double -> IO ()
+configureLayout :: PangoLayout -> Pango.FontDescription -> Double -> IO ()
 configureLayout layout font width = do
   Pango.layoutSetFontDescription layout (Just font)
   Pango.layoutSetWidth layout (Just width)
@@ -42,7 +43,7 @@ memeText surface topText bottomText = do
     bottomHeight <- Cairo.liftIO $ do
       configureLayout topLayout topFont width
       configureLayout bottomLayout bottomFont width
-      (_, Pango.PangoRectangle _ _ _ bottomHeight) <- Pango.layoutGetExtents bottomLayout
+      (_, PangoRectangle _ _ _ bottomHeight) <- Pango.layoutGetExtents bottomLayout
       return bottomHeight
 
     Cairo.moveTo 0 0
@@ -76,5 +77,3 @@ main = do
     putStrLn "okay"
   else
     putStrLn "I don't have that template"
-  
-
