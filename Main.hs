@@ -58,8 +58,6 @@ memeText surface topText bottomText = do
     Cairo.setSourceRGBA 1 1 1 1
     Cairo.fill
 
-    return ()
-
 renderTemplate :: String -> String -> String -> IO ()
 renderTemplate templateName topText bottomText =
   Cairo.withImageSurfaceFromPNG path $ \surface ->
