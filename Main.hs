@@ -15,6 +15,7 @@ import qualified Data.Text as Text
 import           Data.Char (isLetter)
 import           Network.Wai.Handler.Warp as Warp
 import           Control.Lens
+import qualified Data.Configurator as Conf
 
 data Command = ListMemes | MakeMeme Meme | AmbiguousSide
 instance Show Command where
@@ -47,36 +48,43 @@ usageMessage memes =
                         , Text.intercalate " " (Set.toAscList (Set.map Text.pack memes))
                         ]
 
-makeUniqueTemplate :: Meme -> IO TR.Message
-makeUniqueTemplate meme = do
+makeUniqueTemplate :: String -> String -> Meme -> IO TR.Message
+makeUniqueTemplate localPath remotePath meme = do
   let filename = "test.png"
-      localPath = "testmemes"
-      remotePath = "http://example.com/memes"
   renderMeme meme (localPath </> filename)
   return $ TR.defaultMessage & TR.iconEmoji .~ TR.Icon "helicopter"
                              & TR.text .~ Text.pack (remotePath </> filename)
                              & TR.username .~ "memebot"
 
-handler :: Set String -> TR.Command -> TR.Slack Text
-handler templates command = case parseOnly inputParser (command ^. TR.text) of
-  Left _ -> return (usageMessage templates)
-  Right ListMemes -> return (usageMessage templates)
-  Right AmbiguousSide -> return "You gotta put the pipe somewhere!"
-  Right (MakeMeme meme@(Meme templateName _ _))
-    | templateName `Set.member` templates -> do
-      message <- TR.liftIO $ makeUniqueTemplate meme
-      TR.say (message & TR.destination .~ (command ^. TR.source))
-      return ""
-    | otherwise -> return $ Text.append "Unknown template " (Text.pack templateName)
+handler :: MemeBot -> TR.Command -> TR.Slack Text
+handler (MemeBot templates localPath remotePath) command =
+  case parseOnly inputParser (command ^. TR.text) of
+    Left _ -> return (usageMessage templates)
+    Right ListMemes -> return (usageMessage templates)
+    Right AmbiguousSide -> return "You gotta put the pipe somewhere!"
+    Right (MakeMeme meme@(Meme templateName _ _))
+      | templateName `Set.member` templates -> do
+        message <- TR.liftIO $ makeUniqueTemplate localPath remotePath meme
+        TR.say (message & TR.destination .~ (command ^. TR.source))
+        return ""
+      | otherwise -> return $ Text.append "Unknown template " (Text.pack templateName)
+
+data MemeBot = MemeBot (Set String) String String
 
 main :: IO ()
 main = do
+  conf <- Conf.load [Conf.Required "conf"]
   files <- getDirectoryContents "templates/"
-  token <- readFile "token"
+  [token, localPath, remotePath, hookPath] <- sequence $
+    Conf.require conf <$> [ "incoming-token"
+                          , "local-path"
+                          , "remote-path"
+                          , "incoming-hook"
+                          ]
   let fileNames = Set.fromList files \\ Set.fromList [".", ".."]
       templates = Set.map dropExtension fileNames
-      path = "https://trello.slack.com/services/hooks/incoming-webhook"
-      bot = TR.bot (TR.Account token path) (handler templates)
+      memebot = MemeBot templates localPath remotePath
+      bot = TR.bot (TR.Account token hookPath) (handler memebot)
       port = 4000
 
   putStrLn $ "Running on port " ++ show port
