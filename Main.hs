@@ -2,7 +2,7 @@
 
 module Main where
 import           Rendering
-import           System.Directory (getDirectoryContents)
+import           System.Directory (getDirectoryContents, createDirectoryIfMissing)
 import           Data.Set ((\\), Set)
 import qualified Data.Set as Set
 import           System.FilePath (dropExtension, (<.>), (</>))
@@ -67,10 +67,15 @@ handler (MemeBot templates localPath remotePath) command =
     Right AmbiguousSide -> return "You gotta put the pipe somewhere!"
     Right (MakeMeme meme@(Meme templateName _ _))
       | templateName `Set.member` templates -> do
-        filename <- TR.liftIO $ saveMeme localPath meme
+        let TR.User username = command ^. TR.user
+            pathPrefix = Text.unpack username
+        filename <- TR.liftIO $ do
+          let dir = localPath </> pathPrefix
+          createDirectoryIfMissing True dir
+          saveMeme dir meme
 
         let messageText = mconcat ["<"
-                                  , Text.pack (remotePath </> filename)
+                                  , Text.pack (remotePath </> pathPrefix </> filename)
                                   , "| >"
                                   ]
         TR.say $ TR.message (TR.Icon "helicopter")
