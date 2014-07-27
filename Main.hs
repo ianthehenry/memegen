@@ -14,7 +14,7 @@ import           Data.Text (Text)
 import qualified Data.Text as Text
 import           Data.Char (isSpace)
 import           Network.Wai.Handler.Warp as Warp
-import           Control.Lens ((^.), (&))
+import           Control.Lens ((^.))
 import           Data.Monoid (mconcat)
 import qualified Data.Configurator as Conf
 import qualified Data.UUID.V4 as UUID
