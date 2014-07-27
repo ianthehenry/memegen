@@ -51,22 +51,12 @@ usageMessage memes =
                         , Text.intercalate " " (Set.toAscList (Set.map Text.pack memes))
                         ]
 
-makeUniqueTemplate :: String -> String -> Meme -> IO TR.Message
-makeUniqueTemplate localPath remotePath meme = do
+saveMeme :: String -> Meme -> IO FilePath
+saveMeme localPath meme = do
   filename <- (<.> "png") . UUID.toString <$> UUID.nextRandom
-
-  let messageText = mconcat ["<"
-                            , Text.pack (remotePath </> filename)
-                            , "|"
-                            , "MEME"
-                            , ">"
-                            ]
-  
   renderMeme meme (localPath </> filename)
-  return $ TR.defaultMessage & TR.iconEmoji .~ TR.Icon "helicopter"
-                             & TR.text .~ messageText
-                             & TR.username .~ "memebot"
-
+  return filename
+  
 handler :: MemeBot -> TR.Command -> TR.Slack Text
 handler (MemeBot templates localPath remotePath) command =
   case parseOnly inputParser (command ^. TR.text) of
@@ -75,8 +65,18 @@ handler (MemeBot templates localPath remotePath) command =
     Right AmbiguousSide -> return "You gotta put the pipe somewhere!"
     Right (MakeMeme meme@(Meme templateName _ _))
       | templateName `Set.member` templates -> do
-        message <- TR.liftIO $ makeUniqueTemplate localPath remotePath meme
-        TR.say (message & TR.destination .~ (command ^. TR.source))
+        filename <- TR.liftIO $ saveMeme localPath meme
+
+        let messageText = mconcat ["<"
+                                  , Text.pack (remotePath </> filename)
+                                  , "|"
+                                  , "MEME"
+                                  , ">"
+                                  ]
+        TR.say $ TR.message (TR.Icon "helicopter")
+                            "memebot"
+                            messageText
+                            (command ^. TR.source)
         return ""
       | otherwise -> return $ Text.append "Unknown template " (Text.pack templateName)
 
