@@ -2,7 +2,7 @@
 
 It's a bot for Slack that generates memes! But don't take my word for it. *Let me show you*.
 
-> /meme success-kid built a meme generator | in haskell
+> /meme success-kid wrote a meme generator | in haskell
 
 ![A success we can all appreciate](screenshot.png)
 
