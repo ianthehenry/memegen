@@ -71,9 +71,7 @@ handler (MemeBot templates localPath remotePath) command =
 
         let messageText = mconcat ["<"
                                   , Text.pack (remotePath </> filename)
-                                  , "|"
-                                  , "MEME"
-                                  , ">"
+                                  , "| >"
                                   ]
         TR.say $ TR.message (TR.Icon "helicopter")
                             "memebot"
