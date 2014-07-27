@@ -2,3 +2,4 @@ remote-path = "http://example.com/memes"
 local-path = "testmemes/"
 incoming-token = "asdf"
 incoming-hook = "https://company.slack.com/services/hooks/incoming-webhook"
+port = 4000

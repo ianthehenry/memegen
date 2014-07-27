@@ -81,11 +81,11 @@ main = do
                           , "remote-path"
                           , "incoming-hook"
                           ]
+  port <- Conf.require conf "port"
   let fileNames = Set.fromList files \\ Set.fromList [".", ".."]
       templates = Set.map dropExtension fileNames
       memebot = MemeBot templates localPath remotePath
       bot = TR.bot (TR.Account token hookPath) (handler memebot)
-      port = 4000
 
   putStrLn $ "Running on port " ++ show port
   Warp.run port bot
