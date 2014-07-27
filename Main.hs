@@ -14,8 +14,11 @@ import           Data.Text (unpack, strip, toUpper, Text)
 import qualified Data.Text as Text
 import           Data.Char (isLetter)
 import           Network.Wai.Handler.Warp as Warp
-import           Control.Lens
+import           Control.Lens ((^.), (.~), (&))
+import           Data.Monoid (mconcat)
 import qualified Data.Configurator as Conf
+import qualified Data.UUID.V4 as UUID
+import qualified Data.UUID as UUID
 
 data Command = ListMemes | MakeMeme Meme | AmbiguousSide
 instance Show Command where
@@ -50,10 +53,18 @@ usageMessage memes =
 
 makeUniqueTemplate :: String -> String -> Meme -> IO TR.Message
 makeUniqueTemplate localPath remotePath meme = do
-  let filename = "test.png"
+  filename <- (<.> "png") . UUID.toString <$> UUID.nextRandom
+
+  let messageText = mconcat ["<"
+                            , Text.pack (remotePath </> filename)
+                            , "|"
+                            , "MEME"
+                            , ">"
+                            ]
+  
   renderMeme meme (localPath </> filename)
   return $ TR.defaultMessage & TR.iconEmoji .~ TR.Icon "helicopter"
-                             & TR.text .~ Text.pack (remotePath </> filename)
+                             & TR.text .~ messageText
                              & TR.username .~ "memebot"
 
 handler :: MemeBot -> TR.Command -> TR.Slack Text
