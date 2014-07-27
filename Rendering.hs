@@ -3,13 +3,12 @@ module Rendering (
   Meme(..)
 ) where
 import qualified Graphics.Rendering.Cairo as Cairo
-import Graphics.Rendering.Pango (PangoLayout, PangoRectangle(..))
+import           Graphics.Rendering.Pango (PangoLayout, PangoRectangle(..))
 import qualified Graphics.Rendering.Pango as Pango
-import Data.Functor ((<$>))
-import System.Directory (getDirectoryContents)
-import Data.Set ((\\))
-import qualified Data.Set as Set
-import System.FilePath (dropExtension, (<.>), (</>))
+import           Data.Text (Text, length, unpack)
+import           Data.Functor ((<$>))
+import           System.FilePath ((<.>), (</>))
+import           Prelude hiding (length)
 
 memeFont :: Double -> IO Pango.FontDescription
 memeFont size = do
@@ -27,11 +26,11 @@ configureLayout layout font width = do
 clamp :: Ord a => (a, a) -> a -> a
 clamp (low, high) val = max (min high val) low
 
-fontSize :: Double -> String -> Double
+fontSize :: Double -> Text -> Double
 fontSize width text = clamp (30, 80) estimate
   where estimate = width / fromIntegral (length text)
 
-memeText :: Cairo.Surface -> String -> String -> IO ()
+memeText :: Cairo.Surface -> Text -> Text -> IO ()
 memeText surface topText bottomText = do
   width <- fromIntegral <$> Cairo.imageSurfaceGetWidth surface
   height <- fromIntegral <$> Cairo.imageSurfaceGetHeight surface
@@ -40,8 +39,8 @@ memeText surface topText bottomText = do
   bottomFont <- memeFont (fontSize width bottomText)
 
   Cairo.renderWith surface $ do
-    topLayout <- Pango.createLayout topText
-    bottomLayout <- Pango.createLayout bottomText
+    topLayout <- Pango.createLayout (unpack topText)
+    bottomLayout <- Pango.createLayout (unpack bottomText)
 
     bottomHeight <- Cairo.liftIO $ do
       configureLayout topLayout topFont width
@@ -62,7 +61,7 @@ memeText surface topText bottomText = do
     Cairo.setSourceRGBA 1 1 1 1
     Cairo.fill
 
-data Meme = Meme String String String
+data Meme = Meme String Text Text
 
 renderMeme :: Meme -> FilePath -> IO ()
 renderMeme (Meme templateName topText bottomText) outPath =
