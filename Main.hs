@@ -10,11 +10,11 @@ import qualified Network.Tightrope as TR
 import           Data.Attoparsec.Text
 import           Control.Applicative
 import           Prelude hiding (take, takeWhile)
-import           Data.Text (unpack, strip, toUpper, Text)
+import           Data.Text (Text)
 import qualified Data.Text as Text
-import           Data.Char (isLetter)
+import           Data.Char (isSpace)
 import           Network.Wai.Handler.Warp as Warp
-import           Control.Lens ((^.), (.~), (&))
+import           Control.Lens ((^.), (&))
 import           Data.Monoid (mconcat)
 import qualified Data.Configurator as Conf
 import qualified Data.UUID.V4 as UUID
@@ -23,23 +23,25 @@ import qualified Data.UUID as UUID
 data Command = ListMemes | MakeMeme Meme | AmbiguousSide
 instance Show Command where
   show ListMemes = "list"
-  show (MakeMeme (Meme a b c)) = show [a, unpack b, unpack c]
+  show (MakeMeme (Meme a b c)) = show [a, Text.unpack b, Text.unpack c]
   show AmbiguousSide = "ambiguous"
 
 inputParser :: Parser Command
 inputParser = parseNothing
   <|> parseComplete
+  <|> parseNoText
   <|> parseIncomplete
   where parseNothing = endOfInput *> return ListMemes
+        parseNoText = (\t -> MakeMeme (Meme t "" "")) <$> parseTemplate <* endOfInput
+        parseTemplate = Text.unpack . Text.toLower <$> takeTill isSpace
         parseComplete = do
-          templateName <- word
-          topText <- takeWhile1 (/= '|')
+          templateName <- parseTemplate
+          topText <- takeTill (== '|')
           take 1
-          bottomText <- takeWhile (return True)
-          return $ MakeMeme $ Meme (unpack templateName)
-                                   (toUpper $ strip topText)
-                                   (toUpper $ strip bottomText)
-          where word = takeWhile1 isLetter
+          bottomText <- takeText
+          return $ MakeMeme $ Meme templateName
+                                   (Text.toUpper $ Text.strip topText)
+                                   (Text.toUpper $ Text.strip bottomText)
         parseIncomplete = return AmbiguousSide
 
 usageMessage :: Set String -> Text
@@ -59,7 +61,7 @@ saveMeme localPath meme = do
   
 handler :: MemeBot -> TR.Command -> TR.Slack Text
 handler (MemeBot templates localPath remotePath) command =
-  case parseOnly inputParser (command ^. TR.text) of
+  case parseOnly inputParser (Text.strip $ command ^. TR.text) of
     Left _ -> return (usageMessage templates)
     Right ListMemes -> return (usageMessage templates)
     Right AmbiguousSide -> return "You gotta put the pipe somewhere!"
