@@ -78,10 +78,8 @@ handler (MemeBot templates localPath remotePath) command =
                                   , Text.pack (remotePath </> pathPrefix </> filename)
                                   , "| >"
                                   ]
-        TR.say $ TR.message (TR.Icon "helicopter")
-                            "memebot"
-                            messageText
-                            (command ^. TR.source)
+            message = TR.message (TR.Icon "helicopter") "memebot" messageText
+        TR.say message (command ^. TR.source)
         return ""
       | otherwise -> return $ Text.append "Unknown template " (Text.pack templateName)
 
