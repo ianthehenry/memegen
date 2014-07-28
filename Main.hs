@@ -36,7 +36,7 @@ inputParser = parseNothing
         parseTemplate = Text.unpack . Text.toLower <$> takeTill isSpace
         parseComplete = do
           templateName <- parseTemplate
-          topText <- takeTill (== '|')
+          topText <- takeTill (== ';')
           take 1
           bottomText <- takeText
           return $ MakeMeme $ Meme templateName
@@ -46,8 +46,8 @@ inputParser = parseNothing
 
 usageMessage :: Set String -> Text
 usageMessage memes =
-  Text.intercalate "\n" [ "Usage: /meme memename (top text) | (bottom text)"
-                        , "That's a pipe character separating the top from the bottom."
+  Text.intercalate "\n" [ "Usage: /meme memename (top text); (bottom text)"
+                        , "That's a semicolon character separating the top from the bottom. You can't make a meme with a semicolon in the top text. Deal with it."
                         , "See https://github.com/ianthehenry/memegen/tree/master/templates for a complete list of memes, and open a pull request to add your own. Or try to figure out what it might be from this list:"
                         , ""
                         , Text.intercalate " " (Set.toAscList (Set.map Text.pack memes))
