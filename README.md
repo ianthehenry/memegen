@@ -25,11 +25,11 @@ Afterwards, I'm pretty sure you need `gtk2hs-buildtools` for something.
 
 Make sure you don't install that into a sandbox! It adds some binaries that you need. So make sure `~/.cabal/bin` is on your `PATH`.
 
-Afterwards, we do haskell things:
+Afterwards, we do Haskell things:
 
     $ cabal sandbox init
 
-We have to install the Haskell `pango` bindings separately because `clang` can't build it. Look, don't ask me.
+(Haskell-flavored alert! With GHC 7.6, we have to install the Haskell `pango` bindings separately because `clang` can't build it. Look, don't ask me. GHC 7.8 users may safely skip to the next step.)
 
     $ cabal install pango -j --with-gcc=gcc-4.8
 
