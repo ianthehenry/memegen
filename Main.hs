@@ -59,8 +59,15 @@ saveMeme localPath meme = do
   renderMeme meme (localPath </> filename)
   return filename
   
+getTemplates :: IO (Set String)
+getTemplates = do
+  files <- getDirectoryContents "templates/"
+  let fileNames = Set.fromList files \\ Set.fromList [".", ".."]
+  return $ Set.map dropExtension fileNames
+
 handler :: MemeBot -> TR.Command -> TR.Slack Text
-handler (MemeBot templates localPath remotePath) command =
+handler (MemeBot localPath remotePath) command = do
+  templates <- TR.liftIO getTemplates
   case parseOnly inputParser (Text.strip $ command ^. TR.text) of
     Left _ -> return (usageMessage templates)
     Right ListMemes -> return (usageMessage templates)
@@ -83,12 +90,11 @@ handler (MemeBot templates localPath remotePath) command =
         return ""
       | otherwise -> return $ Text.append "Unknown template " (Text.pack templateName)
 
-data MemeBot = MemeBot (Set String) String String
+data MemeBot = MemeBot String String
 
 main :: IO ()
 main = do
   conf <- Conf.load [Conf.Required "conf"]
-  files <- getDirectoryContents "templates/"
   [token, localPath, remotePath, hookPath] <- sequence $
     Conf.require conf <$> [ "incoming-token"
                           , "local-path"
@@ -96,9 +102,7 @@ main = do
                           , "incoming-hook"
                           ]
   port <- Conf.require conf "port"
-  let fileNames = Set.fromList files \\ Set.fromList [".", ".."]
-      templates = Set.map dropExtension fileNames
-      memebot = MemeBot templates localPath remotePath
+  let memebot = MemeBot localPath remotePath
       bot = TR.bot (TR.Account token hookPath) (handler memebot)
 
   putStrLn $ "Running on port " ++ show port
