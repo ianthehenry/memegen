@@ -64,7 +64,7 @@ handler (MemeBot templates localPath remotePath) command =
   case parseOnly inputParser (Text.strip $ command ^. TR.text) of
     Left _ -> return (usageMessage templates)
     Right ListMemes -> return (usageMessage templates)
-    Right AmbiguousSide -> return "You gotta put the pipe somewhere!"
+    Right AmbiguousSide -> return "You gotta put the semicolon somewhere! Otherwise it's ambiguous if it should go on the top or bottom. NO it is not meme-aware get over yourself"
     Right (MakeMeme meme@(Meme templateName _ _))
       | templateName `Set.member` templates -> do
         let TR.User username = command ^. TR.user
