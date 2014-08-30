@@ -9,6 +9,10 @@ import           Data.Text (Text, length, unpack)
 import           Data.Functor ((<$>))
 import           System.FilePath ((<.>), (</>))
 import           Prelude hiding (length)
+import           System.Directory (doesDirectoryExist, getDirectoryContents)
+import           System.Random (getStdRandom, randomR)
+import           Data.List ((\\))
+import qualified Data.List as List
 
 memeFont :: Double -> IO Pango.FontDescription
 memeFont size = do
@@ -63,9 +67,21 @@ memeText surface topText bottomText = do
 
 data Meme = Meme String Text Text
 
+randomFile :: [FilePath] -> IO FilePath
+randomFile contents = (files !!) <$> getStdRandom (randomR (0, List.length files - 1))
+  where files = contents \\ [".", ".."]
+
+filePathForTemplate :: String -> IO FilePath
+filePathForTemplate name = do
+  let path = "templates" </> name
+  isDirectory <- doesDirectoryExist path
+  if isDirectory then
+    (path </>) <$> (randomFile =<< getDirectoryContents path)
+  else return (path <.> "png")
+
 renderMeme :: Meme -> FilePath -> IO ()
-renderMeme (Meme templateName topText bottomText) outPath =
+renderMeme (Meme templateName topText bottomText) outPath = do
+  path <- filePathForTemplate templateName
   Cairo.withImageSurfaceFromPNG path $ \surface ->
     memeText surface topText bottomText >>
     Cairo.surfaceWriteToPNG surface outPath
-  where path = "templates" </> templateName <.> "png"
